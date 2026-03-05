@@ -33,7 +33,9 @@ import pandas as pd
 
 # Path to the input CSV file (relative to the project root).
 # Update this if your file has a different name or location.
-INPUT_CSV_PATH = "data/city_environment_data.csv"
+# The main combined dataset is stored in:
+#   data/excel_database(Variables).csv
+INPUT_CSV_PATH = "data/excel_database(Variables).csv"
 
 # The output file will be written to the *same folder* as the input CSV.
 OUTPUT_CSV_NAME = "city_impact_scores.csv"
@@ -71,6 +73,20 @@ def min_max_normalize(series: pd.Series) -> pd.Series:
     return (series - min_value) / (max_value - min_value)
 
 
+def clean_currency_column(df: pd.DataFrame, column_name: str) -> None:
+    """
+    Convert a column with currency-formatted strings (e.g. "$4.95", "$7,767,362,043.20")
+    into numeric values that pandas can use for math operations.
+    """
+    df[column_name] = (
+        df[column_name]
+        .astype(str)
+        .str.replace(r"[\$,]", "", regex=True)
+        .str.strip()
+    )
+    df[column_name] = pd.to_numeric(df[column_name], errors="coerce")
+
+
 def main() -> None:
     # -----------------------------------------------------------------------
     # Step 1 — Load Data
@@ -97,6 +113,18 @@ def main() -> None:
         ("Grid_Carbon_Intensity", "norm_Grid_Carbon_Intensity"),
         ("Electricity_Price", "norm_Electricity_Price"),
     )
+
+    # The source CSV also contains a second table with data center
+    # facility information below the city rows. Those rows do not have
+    # values for fields like Avg_Summer_Temp and should be excluded from
+    # the city-level scoring.
+    df = df[df["Avg_Summer_Temp"].notna()].copy()
+
+    # The Water_Price and Electricity_Price columns are stored as strings
+    # with currency formatting (e.g. "$4.95", "$7,767,362,043.20").
+    # We first convert them to numeric, then apply min–max normalization.
+    clean_currency_column(df, "Water_Price")
+    clean_currency_column(df, "Electricity_Price")
 
     for original_col, norm_col in columns_to_normalize:
         if original_col not in df.columns:

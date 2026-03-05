@@ -1,0 +1,16 @@
+city,state,state_ID,city_ID,latitude,longitude,avg_Annual_Precipitation,Rain_Jan,Rain_Feb,Rain_Mar,Rain_Apr,Rain_May,Rain_Jun,Rain_Jul,Rain_Aug,Rain_Sep,Rain_Oct,Rain_Nov,Rain_Dec,Avg_Annual_Temp,Avg_Summer_Temp,Cooling_Degree_Days,Heating_Degree_Days,Water_Price,Water_Stress_Index,Drought_Risk,Grid_Carbon_Intensity,Electricity_Price
+Northern Virginia (NoVA),Virginia,VA,NoVA,39.0215,-77.4579,43.735,47.98,47.23,47.39,47.35,45.21,43.77,42.86,41.61,40.6,41.01,39.68,40.13,57.475,80,693,4481,$4.95 ,-0.63,-0.63,235.0115766,"$7,767,362,043.20 "
+Dallas–Fort Worth,Texas,TX,DFW,32.7357,-97.4344,2.443333333,1.38,3.97,2.76,3.12,2.35,0.78,0.47,0.01,0.83,9.63,0.47,3.55,68.1,98,3373,1482,$4.29 ,-3.87,-3.87,338.5745422,"$46,684,224,688.50 "
+Silicon Valley,California,CA,SV,37.3718,-121.9694,29.77083333,22.3,25.7,31.87,31,31.72,31.68,31.68,31.7,31.46,31.33,31.28,25.53,58.25,66.5,866,3087,$7.00 ,0.24,0.24,160.1818447,"$18,478,436,213.50 "
+Phoenix,Arizona,AZ,PHX,33.3441,-111.6187,0.934166667,2.21,1.05,2.09,0.2,0.46,0.09,0.52,1.83,1.18,0.19,0.47,0.92,60.73333333,95,3175,2062,$3.38 ,1.31,1.31,308.4798812,"$9,539,844,180.80 "
+Chicago,Illinois,IL,CHI,41.8536,-87.6182,2.8875,2.62,2.83,4.34,2.55,2.48,1.89,4.75,4.01,2.4,3.3,0.72,2.76,54.74166667,82,881,5320,$3.88 ,-0.9925,-0.9925,212.6730151,"$15,161,020,777.30 "
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Region,"City, State",Data Center Facility,Latitude,Longitude,,,,,,,,,,,,,,,,,,,,,,,
+Northern Virginia (NoVA),"Ashburn, VA",Equinix Ashburn Campus (Data Center Alley),39.0163,-77.459,,,,,,,,,,,,,,,,,,,,,,,
+,"Ashburn, VA",Digital Realty Ashburn Campus,39.0215,-77.4579,,,,,,,,,,,,,,,,,,,,,,,
+Dallas–Fort Worth,"Fort Worth, TX",Meta Fort Worth Data Center,32.7357,-97.4344,,,,,,,,,,,,,,,,,,,,,,,
+,"Dallas, TX",Equinix Dallas (DA1),32.8009,-96.8195,,,,,,,,,,,,,,,,,,,,,,,
+Silicon Valley,"Santa Clara, CA",Vantage Data Centers (Santa Clara Campus),37.3718,-121.9694,,,,,,,,,,,,,,,,,,,,,,,
+Phoenix,"Mesa, AZ",EdgeCore Mesa Data Center Campus,33.3441,-111.6187,,,,,,,,,,,,,,,,,,,,,,,
+Chicago,"Chicago, IL",Digital Realty ORD10 (350 E. Cermak),41.8536,-87.6182,,,,,,,,,,,,,,,,,,,,,,,

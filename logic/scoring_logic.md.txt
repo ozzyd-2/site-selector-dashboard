@@ -1,101 +1,141 @@
-# Scoring Logic – Site Selector Water Risk Dashboard
+Site Selector Dashboard – Scoring Logic
+Purpose
+The Site Selector Dashboard evaluates potential locations for building a new data center facility by converting environmental and infrastructure data into comparable risk indicators.
+The algorithm transforms raw city-level data into three intermediate metrics:
+• Water Risk Score
+• Cooling Cost Index
+• Carbon Cost
+These metrics are combined into a single Total Impact Score that allows cities to be compared within the dashboard.
+Lower Total Impact Scores represent more favorable locations for a facility.
+The scores are intended for relative comparison between cities rather than exact cost prediction.
+--------------------------------------------------------------------------------------------------
 
-## Purpose
-This document defines how raw city-level data is transformed into
-comparative sustainability and risk indicators for site selection.
+3.1 Variables Used
+The model uses the following variables from the dataset:
+| Variable                 | CSV Column               | Description                                                           |
+| ------------------------ | ------------------------ | --------------------------------------------------------------------- |
+City                     | city                     | City name used for dashboard selection                                |
+State                    | state                    | Full state name                                                       |
+State ID                 | state_ID                 | State abbreviation                                                    |
+City ID                  | city_ID                  | Unique identifier for each city                                       |
+Latitude                 | latitude                 | Geographic coordinate for mapping                                     |
+Longitude                | longitude                | Geographic coordinate for mapping                                     |
+Avg Annual Precipitation | avg_Annual_Precipitation | Annual precipitation used as a proxy for long-term water availability |
+Monthly Rainfall         | Rain_Jan – Rain_Dec      | Average rainfall for each month used for dashboard visualization      |
+Avg Annual Temperature   | Avg_Annual_Temp          | Long-term temperature indicator                                       |
+Avg Summer Temperature   | Avg_Summer_Temp          | Average summer temperature used to estimate cooling demand            |
+Cooling Degree Days      | Cooling_Degree_Days      | Measure of cumulative cooling demand                                  |
+Heating Degree Days      | Heating_Degree_Days      | Measure of heating demand                                             |
+Water Price              | Water_Price              | Effective water price ($ per 1000 gallons)                            |
+Water Stress Index       | Water_Stress_Index       | Indicator of regional water scarcity                                  |
+Drought Risk             | Drought_Risk             | Relative drought exposure                                             |
+Grid Carbon Intensity    | Grid_Carbon_Intensity    | CO₂ emissions per MWh of electricity                                  |
+Electricity Price        | Electricity_Price        | Average electricity cost                                              |
+-------------------------------------------------------------------------------------------------------------------------------------
 
-All outputs are indices intended for relative comparison, not exact costs.
+3.2 Equations
+1. Water Risk Score
+Water risk reflects the likelihood that water scarcity, drought, or high water costs could impact facility operations.
 
----
+Water_Risk_Score = (Water_Stress_Index × 2)
 
-## 3.1 Variables Used
+(Drought_Risk × 1.5)
 
-| Variable | Source Column | Why It Matters |
-|--------|---------------|----------------|
-| City | City | Identifier for selection |
-| Avg_Temp | Avg Temp (°F) | Higher temperatures increase cooling demand |
-| Avg_Rainfall | Avg Monthly Rainfall (in) | Proxy for water availability |
-| Water_Price | Water Price ($/kgal) | Economic water risk |
-| Grid_Carbon | Grid Carbon Intensity (kg CO₂/kWh) | Environmental impact of energy use |
+(Water_Price × 1)
 
----
+Where:
+• Water_Stress_Index represents long-term water scarcity conditions
+• Drought_Risk represents the probability of drought conditions
+• Water_Price represents the cost of water per 1000 gallons
+Water stress receives the highest weighting because data centers rely heavily on water for cooling systems.
 
-## 3.2 Equations
+2. Cooling Cost Index
+Cooling demand increases in warmer climates. The Cooling Cost Index estimates cooling-related energy demand.
 
-All metrics are calculated as unitless indices.
-Higher values indicate worse performance unless otherwise stated.
+Cooling_Cost_Index = Avg_Summer_Temp × Electricity_Price
 
-### Cooling Cost Index (CCI)
+Where:
+• Avg_Summer_Temp represents the average summer temperature
+• Electricity_Price represents the cost of electricity
+This index estimates how expensive it may be to operate cooling systems in hotter climates.
 
-Cooling Cost Index =
-Normalized Avg_Temp × Cooling Weight
+3. Carbon Cost
+Carbon cost represents the environmental impact associated with electricity consumption.
+Carbon_Cost = Grid_Carbon_Intensity × Electricity_Price
+Where:
+• Grid_Carbon_Intensity represents kilograms of CO₂ emitted per MWh of electricity generation.
+  Higher carbon intensity means the same electricity usage produces greater emissions.
 
-Rationale:
-Higher ambient temperatures increase cooling energy demand
-for data center operations.
+4. Total Impact Score
+The Total Impact Score combines water risk, cooling cost, and carbon cost into a single comparative metric.
+Total_Impact_Score = (Water_Risk_Score × 2)
 
----
+(Cooling_Cost_Index × 1)
 
-### Water Stress Score (WSS)
+(Carbon_Cost × 1.5)
 
-Water Stress Score =
-( Normalized Water_Price × 0.5 ) +
-( Inverse Normalized Avg_Rainfall × 0.5 )
+Weighting rationale:
 
-Rationale:
-High water prices and low rainfall both indicate greater
-water scarcity and operational risk.
+• Water Risk receives the highest weighting (×2) because water availability is critical for cooling reliability.
+• Carbon Cost receives a moderate weighting (×1.5) to account for sustainability impacts and potential carbon regulations.
+• Cooling Cost receives a lower weighting (×1) because it primarily affects operational energy costs rather than system feasibility.
+-----------------------------------------------------------------------------------------------------------------------------------------------
+3.3 Scenario Logic
 
----
+The dashboard can explore alternative decision priorities by adjusting the weighting of each indicator.
+Base Case – Balanced Sustainability
 
-### Carbon Cost Index (CCI₂)
+Water Risk Weight = 2
+Cooling Cost Weight = 1
+Carbon Cost Weight = 1.5
 
-Carbon Cost Index =
-Normalized Avg_Temp × Grid_Carbon
+Carbon Priority Scenario
 
-Rationale:
-Cooling demand has a higher environmental impact in regions
-with carbon-intensive electricity grids.
+Water Risk Weight = 1.5
+Cooling Cost Weight = 1
+Carbon Cost Weight = 3
 
----
+This scenario represents organizations prioritizing low-carbon electricity grids.
 
-## 3.3 Scenario Logic
+Water Conservation Scenario
 
-### Base Case – Balanced Sustainability
+Water Risk Weight = 3
+Cooling Cost Weight = 1
+Carbon Cost Weight = 1
 
-Total Impact Score =
-( Water Stress Score × 2.0 ) +
-( Carbon Cost Index × 1.5 ) +
-( Cooling Cost Index × 1.0 )
+This scenario emphasizes long-term water security.
 
----
+These alternative weightings allow the dashboard to demonstrate how site rankings change depending on organizational priorities.
+------------------------------------------------------------------------------------------------------------------------------------------
+3.4 Assumptions and Trade-offs
+Several simplifying assumptions were made for this prototype decision-support tool.
 
-### Water-Priority Scenario
+State-level electricity data: Grid carbon intensity is calculated at the state level and used as a proxy for city-level electricity generation mixes.
 
-Total Impact Score =
-( Water Stress Score × 3.0 ) +
-( Carbon Cost Index × 1.0 ) +
-( Cooling Cost Index × 1.0 )
+Effective water price: Water price represents an effective volumetric price based on standardized household usage rather than the exact marginal rate from utilities.
 
----
+Climate indicators: Average summer temperature is used as a simplified proxy for cooling demand rather than modeling detailed building energy simulations.
 
-### Carbon-Priority Scenario
+Relative comparison: All calculated scores are intended for relative comparison between cities, not precise financial cost prediction.
+-------------------------------------------------------------------------------------------------------------------------------------------
+Data Flow for the Dashboard
+The scoring logic supports the dashboard through the following workflow:
 
-Total Impact Score =
-( Water Stress Score × 1.5 ) +
-( Carbon Cost Index × 3.0 ) +
-( Cooling Cost Index × 1.0 )
+City Data (CSV File)
+       ↓
+Python Scoring Algorithm
+       ↓
+Calculated Risk & Cost Scores
+       ↓
+Dashboard Visualization
+       ↓
+User Comparison of Cities
 
-
----
-
-## 3.4 Assumptions & Trade-offs
-
-• All indices are normalized to allow fair comparison across cities.
-• Weightings represent relative importance, not monetary values.
-• Rainfall is used as a proxy for water availability.
-• Higher Total Impact Score indicates a less desirable site.
-
-If decision priorities shift, scenario weightings change
-while underlying data remains constant.
-
+When a user selects a city from the dropdown menu, the dashboard displays:
+• Monthly rainfall bar chart
+• Water Risk Score
+• Cooling Cost Index
+• Carbon Cost
+• Total Impact Score
+This allows decision makers to quickly compare environmental and operational trade-offs between potential locations.
+---------------------------------------------------------------------------------------------------------------------------------
