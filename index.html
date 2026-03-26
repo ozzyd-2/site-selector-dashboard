@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WaterRisk Explorers</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+      --green: #22c55e;
+      --teal: #14b8a6;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --blue: #2563eb;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .app { max-width: 1400px; margin: 0 auto; padding: 16px; }
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .title h1 { margin: 0; font-size: 1.35rem; }
+    .title p { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+    .main-nav {
+      width: 100%;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .main-nav a {
+      text-decoration: none;
+      color: #1e3a8a;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .tabs { display: flex; gap: 8px; }
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: #eef2ff;
+      color: #374151;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .panel h3 { margin: 0 0 10px; font-size: 1rem; }
+    .panel h4 { margin: 12px 0 8px; font-size: 0.95rem; }
+
+    .city-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .city-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 9px 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .city-item.active {
+      border-color: var(--blue);
+      background: #e0e7ff;
+      font-weight: 600;
+    }
+
+    .scenario-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .scenario-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 0.86rem;
+      line-height: 1.3;
+    }
+    .scenario-btn.active {
+      border-color: var(--teal);
+      background: #ccfbf1;
+    }
+
+    .slider-group { margin-top: 10px; }
+    .slider-row { margin-bottom: 12px; }
+    .slider-row label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.86rem;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+    input[type="range"] { width: 100%; }
+
+    .content { display: flex; flex-direction: column; gap: 16px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      min-height: 102px;
+    }
+    .card h4 { margin: 0; font-size: 0.9rem; color: var(--muted); }
+    .card .value { font-size: 1.55rem; margin: 8px 0 4px; font-weight: 700; }
+    .card .meta { font-size: 0.88rem; color: #374151; }
+
+    .row-two {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 12px;
+    }
+    .chart-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      min-height: 320px;
+    }
+    .chart-title { margin: 0 0 8px; font-size: 0.95rem; }
+    .canvas-wrap { position: relative; height: 260px; }
+
+    .row-three .chart-panel { min-height: 340px; }
+    .row-three .canvas-wrap { height: 280px; }
+
+    .hidden { display: none !important; }
+
+    .map-placeholder {
+      background: linear-gradient(135deg, #e0f2fe, #ecfeff);
+      border: 2px dashed #93c5fd;
+      border-radius: var(--radius);
+      padding: 26px;
+      text-align: center;
+      color: #0369a1;
+      min-height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: white;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .info-section {
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .info-section h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+    .info-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .info-card {
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .info-card h3 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+    }
+    .info-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+    .step-number {
+      color: var(--blue);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .about-list {
+      margin: 6px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row-two { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .cards { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div id="home" class="topbar">
+      <div class="title">
+        <h1>WaterRisk Explorers</h1>
+        <p>Data Center Site Selection Dashboard</p>
+        <nav class="main-nav">
+          <a href="#home">Home</a>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#about">About</a>
+          <a href="#methodology">Methodology</a>
+          <a href="#team">Team</a>
+        </nav>
+      </div>
+      <div class="tabs">
+        <button id="chartsTab" class="tab-btn active">Charts View</button>
+        <button id="mapTab" class="tab-btn">Map View</button>
+      </div>
+    </div>
+
+    <div id="dashboard" class="layout">
+      <aside class="panel">
+        <h3>1) City Selection</h3>
+        <div id="cityList" class="city-list"></div>
+
+        <h4>2) Scenario Selection</h4>
+        <div class="scenario-buttons">
+          <button class="scenario-btn active" data-scenario="balanced">
+            <strong>Balanced Sustainability</strong><br />
+            Water: 2.0 | Carbon: 1.5 | Cooling: 1.0
+          </button>
+          <button class="scenario-btn" data-scenario="carbon">
+            <strong>Carbon Priority</strong><br />
+            Water: 1.5 | Carbon: 3.0 | Cooling: 1.0
+          </button>
+          <button class="scenario-btn" data-scenario="cost">
+            <strong>Cost Priority</strong><br />
+            Water: 1.0 | Carbon: 1.0 | Cooling: 2.0
+          </button>
+        </div>
+
+        <h4>3) Adjustable Weights</h4>
+        <div class="slider-group">
+          <div class="slider-row">
+            <label>Water Stress <span id="waterWeightVal">2.0</span></label>
+            <input id="waterSlider" type="range" min="0" max="4" step="0.1" value="2.0" />
+          </div>
+          <div class="slider-row">
+            <label>Carbon Index <span id="carbonWeightVal">1.5</span></label>
+            <input id="carbonSlider" type="range" min="0" max="4" step="0.1" value="1.5" />
+          </div>
+          <div class="slider-row">
+            <label>Cooling Cost <span id="coolingWeightVal">1.0</span></label>
+            <input id="coolingSlider" type="range" min="0" max="4" step="0.1" value="1.0" />
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <section id="chartsView" class="content">
+          <div class="cards">
+            <div class="card">
+              <h4>Water Stress</h4>
+              <div class="value" id="waterScore">-</div>
+              <div class="meta"><span id="waterCategory" class="pill">-</span></div>
+            </div>
+            <div class="card">
+              <h4>Carbon Index</h4>
+              <div class="value" id="carbonScore">-</div>
+              <div class="meta">kg CO2 per MWh</div>
+            </div>
+            <div class="card">
+              <h4>Cooling Cost</h4>
+              <div class="value" id="coolingScore">-</div>
+              <div class="meta">Avg summer temperature impact</div>
+            </div>
+            <div class="card">
+              <h4>Total Impact Score</h4>
+              <div class="value" id="totalScore">-</div>
+              <div class="meta">Score out of 10 (lower is better)</div>
+            </div>
+          </div>
+
+          <div class="row-two">
+            <div class="chart-panel">
+              <h3 class="chart-title">Total Impact Score by City</h3>
+              <div class="canvas-wrap"><canvas id="barChart"></canvas></div>
+            </div>
+            <div class="chart-panel">
+              <h3 class="chart-title">Score Breakdown</h3>
+              <div class="canvas-wrap"><canvas id="donutChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="row-three">
+            <div class="chart-panel">
+              <h3 class="chart-title">Cost vs Water Risk</h3>
+              <div class="canvas-wrap"><canvas id="scatterChart"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="mapView" class="hidden">
+          <div class="map-placeholder">
+            Map View Placeholder<br />
+            (future integration with Leaflet or Mapbox)
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <section id="methodology" class="info-section">
+      <h2>How It Works</h2>
+      <div class="info-grid">
+        <article class="info-card">
+          <span class="step-number">Step 01</span>
+          <h3>Data Collection</h3>
+          <p>Gather temperature, rainfall, water price, and carbon data from sources such as NOAA, EIA, and water stress datasets.</p>
+        </article>
+        <article class="info-card">
+          <span class="step-number">Step 02</span>
+          <h3>Normalization</h3>
+          <p>Apply min-max scaling so variables are converted to a comparable 0-1 range.</p>
+        </article>
+        <article class="info-card">
+          <span class="step-number">Step 03</span>
+          <h3>Index Calculation</h3>
+          <p>Compute the Water Risk Score, Cooling Cost Index, and Carbon Cost for each city.</p>
+        </article>
+        <article class="info-card">
+          <span class="step-number">Step 04</span>
+          <h3>Weighting</h3>
+          <p>Apply adjustable weights to reflect planning priorities like sustainability, carbon reduction, or cost control.</p>
+        </article>
+      </div>
+      <div class="info-grid" style="margin-top:12px;grid-template-columns:1fr;">
+        <article class="info-card">
+          <span class="step-number">Step 05</span>
+          <h3>Visualization</h3>
+          <p>Display outputs in charts, rankings, and an overall Total Impact Score for clear comparison.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h2>Input Variables</h2>
+      <div class="info-grid">
+        <article class="info-card"><h3>Avg Annual Temperature</h3><p>Long-term climate baseline for each city.</p></article>
+        <article class="info-card"><h3>Avg Summer Temperature</h3><p>Primary indicator for cooling demand.</p></article>
+        <article class="info-card"><h3>Cooling Degree Days</h3><p>Cumulative measure of cooling needs over time.</p></article>
+        <article class="info-card"><h3>Annual Precipitation</h3><p>Proxy indicator for regional water availability.</p></article>
+        <article class="info-card"><h3>Water Price</h3><p>Operating cost pressure linked to water use.</p></article>
+        <article class="info-card"><h3>Water Stress Index</h3><p>Relative scarcity and regional water constraints.</p></article>
+        <article class="info-card"><h3>Drought Risk</h3><p>Likelihood of drought-related disruptions.</p></article>
+        <article class="info-card"><h3>Grid Carbon Intensity</h3><p>Emissions impact of consumed electricity.</p></article>
+        <article class="info-card"><h3>Electricity Price</h3><p>Key driver of total operating cost.</p></article>
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h2>Output Indices</h2>
+      <div class="info-grid">
+        <article class="info-card">
+          <h3>Water Risk Score</h3>
+          <p>Combined risk from water stress, drought exposure, and water price pressure.</p>
+        </article>
+        <article class="info-card">
+          <h3>Cooling Cost Index</h3>
+          <p>Estimated cooling burden based on climate heat and electricity price signals.</p>
+        </article>
+        <article class="info-card">
+          <h3>Carbon Cost</h3>
+          <p>Emissions-related impact from local grid carbon intensity and energy use cost.</p>
+        </article>
+        <article class="info-card">
+          <h3>Total Impact Score</h3>
+          <p>Weighted composite indicator used to rank site suitability; lower scores are better.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="about" class="info-section">
+      <h2>About</h2>
+      <div class="info-grid">
+        <article class="info-card">
+          <h3>Why Water Matters for Data Centers</h3>
+          <ul class="about-list">
+            <li>Data centers are growing water consumers.</li>
+            <li>Siting decisions often ignore water risk.</li>
+            <li>This tool makes trade-offs visible.</li>
+          </ul>
+        </article>
+        <article class="info-card">
+          <h3>The Problem</h3>
+          <p>Teams must balance cost, carbon, and water risk while planning resilient, sustainable infrastructure.</p>
+        </article>
+        <article class="info-card">
+          <h3>Our Solution</h3>
+          <p>An interactive dashboard with weighted scoring to compare locations under different strategy scenarios.</p>
+        </article>
+        <article class="info-card">
+          <h3>The Outcome</h3>
+          <p>A practical decision-making tool for planners and engineers evaluating data center site options.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="team" class="info-section">
+      <h2>Team</h2>
+      <div class="info-card">
+        <h3>Project Team</h3>
+        <p>Add team members, affiliations, and contact details here.</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const cityData = [
+      { city: "Northern Virginia", water_stress: 4.1, carbon_index: 3.2, cooling_cost: 2.1, total_score: 4.8 },
+      { city: "Dallas–Fort Worth", water_stress: 5.2, carbon_index: 4.3, cooling_cost: 3.0, total_score: 6.2 },
+      { city: "Silicon Valley", water_stress: 5.6, carbon_index: 4.8, cooling_cost: 3.2, total_score: 7.0 },
+      { city: "Phoenix", water_stress: 7.3, carbon_index: 5.6, cooling_cost: 4.1, total_score: 8.4 },
+      { city: "Chicago", water_stress: 3.2, carbon_index: 2.7, cooling_cost: 1.9, total_score: 3.8 }
+    ];
+
+    const scenarios = {
+      balanced: { water: 2.0, carbon: 1.5, cooling: 1.0 },
+      carbon:   { water: 1.5, carbon: 3.0, cooling: 1.0 },
+      cost:     { water: 1.0, carbon: 1.0, cooling: 2.0 }
+    };
+
+    let selectedCity = cityData[0].city;
+    let weights = { ...scenarios.balanced };
+    let barChart, donutChart, scatterChart;
+
+    const cityListEl = document.getElementById("cityList");
+    const waterScoreEl = document.getElementById("waterScore");
+    const carbonScoreEl = document.getElementById("carbonScore");
+    const coolingScoreEl = document.getElementById("coolingScore");
+    const totalScoreEl = document.getElementById("totalScore");
+    const waterCategoryEl = document.getElementById("waterCategory");
+
+    const waterSlider = document.getElementById("waterSlider");
+    const carbonSlider = document.getElementById("carbonSlider");
+    const coolingSlider = document.getElementById("coolingSlider");
+    const waterWeightVal = document.getElementById("waterWeightVal");
+    const carbonWeightVal = document.getElementById("carbonWeightVal");
+    const coolingWeightVal = document.getElementById("coolingWeightVal");
+
+    function riskColor(score) {
+      if (score < 3.5) return "#22c55e";
+      if (score < 5) return "#14b8a6";
+      if (score < 6.5) return "#f59e0b";
+      return "#ef4444";
+    }
+
+    function categoryLabel(score) {
+      if (score < 3.5) return "Low";
+      if (score < 5) return "Medium";
+      if (score < 6.5) return "High";
+      return "Very High";
+    }
+
+    function computeTotal(city) {
+      const raw = (
+        city.water_stress * weights.water +
+        city.carbon_index * weights.carbon +
+        city.cooling_cost * weights.cooling
+      ) / (weights.water + weights.carbon + weights.cooling);
+
+      return Number(raw.toFixed(2));
+    }
+
+    function getComputedData() {
+      return cityData.map(c => ({ ...c, computed_total: computeTotal(c) }));
+    }
+
+    function renderCityList() {
+      const computed = getComputedData();
+      cityListEl.innerHTML = "";
+      computed
+        .sort((a, b) => a.computed_total - b.computed_total)
+        .forEach(city => {
+          const item = document.createElement("button");
+          item.className = "city-item" + (city.city === selectedCity ? " active" : "");
+          item.innerHTML = `<span>${city.city}</span><span>${city.computed_total}</span>`;
+          item.addEventListener("click", () => {
+            selectedCity = city.city;
+            refreshDashboard();
+          });
+          cityListEl.appendChild(item);
+        });
+    }
+
+    function updateCards() {
+      const city = cityData.find(c => c.city === selectedCity);
+      const total = computeTotal(city);
+      waterScoreEl.textContent = city.water_stress.toFixed(1);
+      carbonScoreEl.textContent = city.carbon_index.toFixed(1);
+      coolingScoreEl.textContent = city.cooling_cost.toFixed(1);
+      totalScoreEl.textContent = total.toFixed(1);
+
+      const label = categoryLabel(city.water_stress);
+      waterCategoryEl.textContent = label;
+      waterCategoryEl.style.backgroundColor = riskColor(city.water_stress);
+    }
+
+    function buildCharts() {
+      const barCtx = document.getElementById("barChart");
+      const donutCtx = document.getElementById("donutChart");
+      const scatterCtx = document.getElementById("scatterChart");
+
+      const computed = getComputedData();
+      const selected = cityData.find(c => c.city === selectedCity);
+      const selectedTotal = computeTotal(selected);
+      const breakdown = [
+        selected.water_stress * weights.water,
+        selected.carbon_index * weights.carbon,
+        selected.cooling_cost * weights.cooling
+      ];
+
+      if (barChart) barChart.destroy();
+      if (donutChart) donutChart.destroy();
+      if (scatterChart) scatterChart.destroy();
+
+      barChart = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: computed.map(c => c.city),
+          datasets: [{
+            label: "Total Impact Score",
+            data: computed.map(c => c.computed_total),
+            backgroundColor: computed.map(c => c.city === selectedCity ? "#2563eb" : "#93c5fd"),
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, title: { display: true, text: "Lower score = better" } }
+          }
+        }
+      });
+
+      donutChart = new Chart(donutCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Water Stress", "Carbon Index", "Cooling Cost"],
+          datasets: [{
+            data: breakdown,
+            backgroundColor: ["#14b8a6", "#f59e0b", "#ef4444"],
+            borderColor: "#ffffff",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const total = breakdown.reduce((a, b) => a + b, 0);
+                  const val = ctx.parsed;
+                  const pct = total ? (val / total) * 100 : 0;
+                  return `${ctx.label}: ${pct.toFixed(1)}%`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      scatterChart = new Chart(scatterCtx, {
+        type: "scatter",
+        data: {
+          datasets: [{
+            label: "Cities",
+            data: cityData.map(c => ({ x: c.cooling_cost, y: c.water_stress, city: c.city })),
+            pointRadius: 7,
+            pointHoverRadius: 9,
+            backgroundColor: cityData.map(c => riskColor(c.water_stress)),
+            borderColor: "#1f2937",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.raw.city}: Cooling ${ctx.raw.x}, Water ${ctx.raw.y}`
+              }
+            }
+          },
+          scales: {
+            x: { title: { display: true, text: "Cooling Cost" }, beginAtZero: true },
+            y: { title: { display: true, text: "Water Risk" }, beginAtZero: true }
+          }
+        },
+        plugins: [{
+          id: "pointLabels",
+          afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            const meta = chart.getDatasetMeta(0);
+            ctx.save();
+            ctx.font = "12px Inter, Arial";
+            ctx.fillStyle = "#334155";
+            meta.data.forEach((point, i) => {
+              const label = chart.data.datasets[0].data[i].city;
+              ctx.fillText(label, point.x + 8, point.y - 8);
+            });
+            ctx.restore();
+          }
+        }]
+      });
+    }
+
+    function refreshDashboard() {
+      renderCityList();
+      updateCards();
+      buildCharts();
+    }
+
+    function setScenario(name) {
+      weights = { ...scenarios[name] };
+      waterSlider.value = weights.water;
+      carbonSlider.value = weights.carbon;
+      coolingSlider.value = weights.cooling;
+      waterWeightVal.textContent = Number(weights.water).toFixed(1);
+      carbonWeightVal.textContent = Number(weights.carbon).toFixed(1);
+      coolingWeightVal.textContent = Number(weights.cooling).toFixed(1);
+      document.querySelectorAll(".scenario-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.scenario === name);
+      });
+      refreshDashboard();
+    }
+
+    document.querySelectorAll(".scenario-btn").forEach(btn => {
+      btn.addEventListener("click", () => setScenario(btn.dataset.scenario));
+    });
+
+    [waterSlider, carbonSlider, coolingSlider].forEach(slider => {
+      slider.addEventListener("input", () => {
+        weights.water = Number(waterSlider.value);
+        weights.carbon = Number(carbonSlider.value);
+        weights.cooling = Number(coolingSlider.value);
+        waterWeightVal.textContent = weights.water.toFixed(1);
+        carbonWeightVal.textContent = weights.carbon.toFixed(1);
+        coolingWeightVal.textContent = weights.cooling.toFixed(1);
+        document.querySelectorAll(".scenario-btn").forEach(btn => btn.classList.remove("active"));
+        refreshDashboard();
+      });
+    });
+
+    const chartsView = document.getElementById("chartsView");
+    const mapView = document.getElementById("mapView");
+    const chartsTab = document.getElementById("chartsTab");
+    const mapTab = document.getElementById("mapTab");
+
+    chartsTab.addEventListener("click", () => {
+      chartsView.classList.remove("hidden");
+      mapView.classList.add("hidden");
+      chartsTab.classList.add("active");
+      mapTab.classList.remove("active");
+    });
+
+    mapTab.addEventListener("click", () => {
+      chartsView.classList.add("hidden");
+      mapView.classList.remove("hidden");
+      mapTab.classList.add("active");
+      chartsTab.classList.remove("active");
+    });
+
+    setScenario("balanced");
+  </script>
+</body>
+</html>
