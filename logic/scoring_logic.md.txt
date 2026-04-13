@@ -1,141 +1,131 @@
-Site Selector Dashboard – Scoring Logic
+WaterRisk Explorers — Scoring Logic (v2)
+========================================
+
 Purpose
-The Site Selector Dashboard evaluates potential locations for building a new data center facility by converting environmental and infrastructure data into comparable risk indicators.
-The algorithm transforms raw city-level data into three intermediate metrics:
-• Water Risk Score
-• Cooling Cost Index
-• Carbon Cost
-These metrics are combined into a single Total Impact Score that allows cities to be compared within the dashboard.
-Lower Total Impact Scores represent more favorable locations for a facility.
-The scores are intended for relative comparison between cities rather than exact cost prediction.
---------------------------------------------------------------------------------------------------
+-------
+The dashboard converts city-level environmental and infrastructure data into
+comparable **pillar scores** on a **0–1** scale (higher = worse within the
+current city cohort), then combines them into a **Total Impact Score** on a
+**0–10** scale. **Lower totals mean better sites.**
 
-3.1 Variables Used
-The model uses the following variables from the dataset:
-| Variable                 | CSV Column               | Description                                                           |
-| ------------------------ | ------------------------ | --------------------------------------------------------------------- |
-City                     | city                     | City name used for dashboard selection                                |
-State                    | state                    | Full state name                                                       |
-State ID                 | state_ID                 | State abbreviation                                                    |
-City ID                  | city_ID                  | Unique identifier for each city                                       |
-Latitude                 | latitude                 | Geographic coordinate for mapping                                     |
-Longitude                | longitude                | Geographic coordinate for mapping                                     |
-Avg Annual Precipitation | avg_Annual_Precipitation | Annual precipitation used as a proxy for long-term water availability |
-Monthly Rainfall         | Rain_Jan – Rain_Dec      | Average rainfall for each month used for dashboard visualization      |
-Avg Annual Temperature   | Avg_Annual_Temp          | Long-term temperature indicator                                       |
-Avg Summer Temperature   | Avg_Summer_Temp          | Average summer temperature used to estimate cooling demand            |
-Cooling Degree Days      | Cooling_Degree_Days      | Measure of cumulative cooling demand                                  |
-Heating Degree Days      | Heating_Degree_Days      | Measure of heating demand                                             |
-Water Price              | Water_Price              | Effective water price ($ per 1000 gallons)                            |
-Water Stress Index       | Water_Stress_Index       | Indicator of regional water scarcity                                  |
-Drought Risk             | Drought_Risk             | Relative drought exposure                                             |
-Grid Carbon Intensity    | Grid_Carbon_Intensity    | CO₂ emissions per MWh of electricity                                  |
-Electricity Price        | Electricity_Price        | Average electricity cost                                              |
--------------------------------------------------------------------------------------------------------------------------------------
+Implementation lives in `logic/site_scores.py` (Python) and mirrors the
+formulas in `index.html` (JavaScript) for the interactive UI.
 
-3.2 Equations
-1. Water Risk Score
-Water risk reflects the likelihood that water scarcity, drought, or high water costs could impact facility operations.
+Normalization
+-------------
+For each numeric input column used in a pillar, apply **min–max** normalization
+across the scored rows only:
 
-Water_Risk_Score = (Water_Stress_Index × 2)
+  norm(x) = (x − min) / (max − min)
 
-(Drought_Risk × 1.5)
+Constants (all NaN) → NaN pillar inputs; identical values → 0.
 
-(Water_Price × 1)
+**Inverted inputs (dryness):** for annual precipitation, use
+`1 − norm(precipitation)` so **less rain = higher risk**.
 
-Where:
-• Water_Stress_Index represents long-term water scarcity conditions
-• Drought_Risk represents the probability of drought conditions
-• Water_Price represents the cost of water per 1000 gallons
-Water stress receives the highest weighting because data centers rely heavily on water for cooling systems.
+Location variables (**latitude**, **longitude**) are **not** scored; they are
+for mapping only.
 
-2. Cooling Cost Index
-Cooling demand increases in warmer climates. The Cooling Cost Index estimates cooling-related energy demand.
+Data sources
+------------
+- **Primary table:** `data/excel_database(Variables).csv` (city rows with
+  `Avg_Summer_Temp` present; facility appendix rows are excluded).
+- **Optional enrichment:** `data/excel_database(grid_carbon).csv` merged on
+  `city` (CO₂ million metric tons, state grid MWh) and on `state_ID`
+  (industrial total price rows), when parsing succeeds.
 
-Cooling_Cost_Index = Avg_Summer_Temp × Electricity_Price
+Variables used by pillars
+-------------------------
+| Theme | CSV column | Role |
+|-------|------------|------|
+| Water | Water_Stress_Index, Drought_Risk, Water_Price | Scarcity, drought, cost |
+| Water | avg_Annual_Precipitation | Inverted → dryness stress |
+| Water | Rain_Jan … Rain_Dec | Std dev across months → variability |
+| Climate | Avg_Summer_Temp, Cooling_Degree_Days | Cooling load |
+| Climate | Avg_Annual_Temp, Heating_Degree_Days | Broader thermal / HVAC exposure |
+| Carbon | Grid_Carbon_Intensity | kg CO₂ / MWh |
+| Carbon | CO2_million_metric_tons (merged) | State grid CO₂ mass |
+| Carbon | Grid_MWh (merged) | State generation scale |
+| Energy cost | Electricity_Price (Variables) | Cleaned numeric; often state industrial total proxy in this dataset |
+| Energy cost | Industrial_Total_USD (merged) | Secondary cost signal when available |
 
-Where:
-• Avg_Summer_Temp represents the average summer temperature
-• Electricity_Price represents the cost of electricity
-This index estimates how expensive it may be to operate cooling systems in hotter climates.
+**Industrial electricity price national average** from the grid workbook is a
+single benchmark, not a per-city differentiator, so it is **not** a scored
+column. **Carbon per MWh** is represented by **Grid_Carbon_Intensity** (and
+averaged with merged CO₂/MWh when those columns exist).
 
-3. Carbon Cost
-Carbon cost represents the environmental impact associated with electricity consumption.
-Carbon_Cost = Grid_Carbon_Intensity × Electricity_Price
-Where:
-• Grid_Carbon_Intensity represents kilograms of CO₂ emitted per MWh of electricity generation.
-  Higher carbon intensity means the same electricity usage produces greater emissions.
+Primary pillar equations (each output ∈ [0, 1])
+-----------------------------------------------
+Inner weights are fixed for transparency.
 
-4. Total Impact Score
-The Total Impact Score combines water risk, cooling cost, and carbon cost into a single comparative metric.
-Total_Impact_Score = (Water_Risk_Score × 2)
+**Water_Risk_Score**
+```
+WR = 0.34·norm(Water_Stress_Index)
+   + 0.28·norm(Drought_Risk)
+   + 0.22·norm(Water_Price)
+   + 0.11·(1 − norm(avg_Annual_Precipitation))
+   + 0.05·norm(std(Rain_Jan…Dec))
+```
 
-(Cooling_Cost_Index × 1)
+**Climate_Load_Index** (thermal / HVAC load proxy; dashboard “Climate” pillar)
+```
+CL = 0.34·norm(Avg_Summer_Temp)
+   + 0.30·norm(Cooling_Degree_Days)
+   + 0.18·norm(Avg_Annual_Temp)
+   + 0.18·norm(Heating_Degree_Days)
+```
 
-(Carbon_Cost × 1.5)
+**Carbon_Impact_Score** (average of available normalized drivers)
+```
+Let S = { norm(Grid_Carbon_Intensity) }
+If CO2_million_metric_tons merged: add norm(CO2_million_metric_tons)
+If Grid_MWh merged: add norm(Grid_MWh)
+Carbon_Impact_Score = mean(S)
+```
 
-Weighting rationale:
+**Energy_Cost_Score**
+```
+If Industrial_Total_USD merged:
+  EC = 0.5·norm(Electricity_Price) + 0.5·norm(Industrial_Total_USD)
+Else:
+  EC = norm(Electricity_Price)
+```
 
-• Water Risk receives the highest weighting (×2) because water availability is critical for cooling reliability.
-• Carbon Cost receives a moderate weighting (×1.5) to account for sustainability impacts and potential carbon regulations.
-• Cooling Cost receives a lower weighting (×1) because it primarily affects operational energy costs rather than system feasibility.
------------------------------------------------------------------------------------------------------------------------------------------------
-3.3 Scenario Logic
+Total Impact Score (0–10)
+-------------------------
+User-adjustable weights (dashboard sliders): `w_water`, `w_climate`,
+`w_carbon`, `w_cost` (non-negative; at least one positive).
 
-The dashboard can explore alternative decision priorities by adjusting the weighting of each indicator.
-Base Case – Balanced Sustainability
+```
+Total_Impact_Score = 10 × (
+    w_water·WR + w_climate·CL + w_carbon·Carbon + w_cost·EC
+) / (w_water + w_climate + w_carbon + w_cost)
+```
 
-Water Risk Weight = 2
-Cooling Cost Weight = 1
-Carbon Cost Weight = 1.5
+Default weights (balanced)
+--------------------------
+- w_water = 2.0  
+- w_climate = 1.0  
+- w_carbon = 1.5  
+- w_cost = 2.0  
 
-Carbon Priority Scenario
+Example scenarios (see `site_scores.SCENARIO_WEIGHTS`)
+-------------------------------------------------------
+- **Balanced:** (2, 1, 1.5, 2)  
+- **Carbon priority:** (1.5, 1, 3, 1)  
+- **Cost priority:** (1, 2, 1, 3)  
+- **Water priority:** (3, 1, 1, 1)  
 
-Water Risk Weight = 1.5
-Cooling Cost Weight = 1
-Carbon Cost Weight = 3
+Outputs for export / UI
+-----------------------
+- Water_Risk_Score  
+- Climate_Load_Index  
+- Carbon_Impact_Score  
+- Energy_Cost_Score  
+- Total_Impact_Score  
 
-This scenario represents organizations prioritizing low-carbon electricity grids.
-
-Water Conservation Scenario
-
-Water Risk Weight = 3
-Cooling Cost Weight = 1
-Carbon Cost Weight = 1
-
-This scenario emphasizes long-term water security.
-
-These alternative weightings allow the dashboard to demonstrate how site rankings change depending on organizational priorities.
-------------------------------------------------------------------------------------------------------------------------------------------
-3.4 Assumptions and Trade-offs
-Several simplifying assumptions were made for this prototype decision-support tool.
-
-State-level electricity data: Grid carbon intensity is calculated at the state level and used as a proxy for city-level electricity generation mixes.
-
-Effective water price: Water price represents an effective volumetric price based on standardized household usage rather than the exact marginal rate from utilities.
-
-Climate indicators: Average summer temperature is used as a simplified proxy for cooling demand rather than modeling detailed building energy simulations.
-
-Relative comparison: All calculated scores are intended for relative comparison between cities, not precise financial cost prediction.
--------------------------------------------------------------------------------------------------------------------------------------------
-Data Flow for the Dashboard
-The scoring logic supports the dashboard through the following workflow:
-
-City Data (CSV File)
-       ↓
-Python Scoring Algorithm
-       ↓
-Calculated Risk & Cost Scores
-       ↓
-Dashboard Visualization
-       ↓
-User Comparison of Cities
-
-When a user selects a city from the dropdown menu, the dashboard displays:
-• Monthly rainfall bar chart
-• Water Risk Score
-• Cooling Cost Index
-• Carbon Cost
-• Total Impact Score
-This allows decision makers to quickly compare environmental and operational trade-offs between potential locations.
----------------------------------------------------------------------------------------------------------------------------------
+Assumptions
+-----------
+- Scores are **relative** to the cities in the current file, not absolute risk.
+- Merged grid fields are **state-level** proxies for each city row.
+- Currency-like strings are stripped to numbers before normalization.
