@@ -1,0 +1,290 @@
+{
+  "meta": {
+    "generated_at": "2026-04-14T01:44:17.866339+00:00",
+    "scoring_version": "v2",
+    "score_direction": "lower_is_better",
+    "total_score_range": "0-10",
+    "pillar_score_range": "0-1"
+  },
+  "default_weights": {
+    "water": 2.0,
+    "climate": 1.0,
+    "carbon": 1.5,
+    "cost": 2.0
+  },
+  "summary": {
+    "city_count": 5,
+    "best_city": "Northern Virginia (NoVA)",
+    "worst_city": "Dallas–Fort Worth",
+    "avg_total": 4.158,
+    "min_total": 2.454,
+    "max_total": 7.257
+  },
+  "cities": [
+    {
+      "rank": 1,
+      "city": "Northern Virginia (NoVA)",
+      "state": "Virginia",
+      "state_id": "VA",
+      "latitude": "39.0215",
+      "longitude": -77.4579,
+      "scores": {
+        "total": 2.454,
+        "water_risk": 0.5310309747898555,
+        "climate_load": 0.3231966085899073,
+        "carbon": 0.1398221133276303,
+        "energy_cost": 0.0
+      },
+      "inputs": {
+        "water_stress_index": -0.63,
+        "drought_risk": -0.63,
+        "water_price": 4.95,
+        "avg_annual_precipitation": 43.735,
+        "avg_summer_temp": 80.0,
+        "avg_annual_temp": 57.475,
+        "cooling_degree_days": 693.0,
+        "heating_degree_days": 4481.0,
+        "grid_carbon_intensity": 235.0115766,
+        "electricity_price": 7767362043.2
+      }
+    },
+    {
+      "rank": 2,
+      "city": "Chicago",
+      "state": "Illinois",
+      "state_id": "IL",
+      "latitude": "41.8536",
+      "longitude": -87.6182,
+      "scores": {
+        "total": 3.098,
+        "water_risk": 0.48661125226573354,
+        "climate_load": 0.36834636342099025,
+        "carbon": 0.19476402220935973,
+        "energy_cost": 0.18998599145794537
+      },
+      "inputs": {
+        "water_stress_index": -0.9925,
+        "drought_risk": -0.9925,
+        "water_price": 3.88,
+        "avg_annual_precipitation": 2.8875,
+        "avg_summer_temp": 82.0,
+        "avg_annual_temp": 54.74166667,
+        "cooling_degree_days": 881.0,
+        "heating_degree_days": 5320.0,
+        "grid_carbon_intensity": 212.6730151,
+        "electricity_price": 15161020777.3
+      }
+    },
+    {
+      "rank": 3,
+      "city": "Silicon Valley",
+      "state": "California",
+      "state_id": "CA",
+      "latitude": "37.3718",
+      "longitude": -121.9694,
+      "scores": {
+        "total": 3.794,
+        "water_risk": 0.7978190165710728,
+        "climate_load": 0.14191311310791888,
+        "carbon": 0.11879222759768028,
+        "energy_cost": 0.27522964191445626
+      },
+      "inputs": {
+        "water_stress_index": 0.24,
+        "drought_risk": 0.24,
+        "water_price": 7.0,
+        "avg_annual_precipitation": 29.77083333,
+        "avg_summer_temp": 66.5,
+        "avg_annual_temp": 58.25,
+        "cooling_degree_days": 866.0,
+        "heating_degree_days": 3087.0,
+        "grid_carbon_intensity": 160.1818447,
+        "electricity_price": 18478436213.5
+      }
+    },
+    {
+      "rank": 4,
+      "city": "Phoenix",
+      "state": "Arizona",
+      "state_id": "AZ",
+      "latitude": "33.3441",
+      "longitude": -111.6187,
+      "scores": {
+        "total": 4.189,
+        "water_risk": 0.7300000000000001,
+        "climate_load": 0.6933926557554804,
+        "carbon": 0.31892439448323956,
+        "energy_cost": 0.04554535019317808
+      },
+      "inputs": {
+        "water_stress_index": 1.31,
+        "drought_risk": 1.31,
+        "water_price": 3.38,
+        "avg_annual_precipitation": 0.934166667,
+        "avg_summer_temp": 95.0,
+        "avg_annual_temp": 60.73333333,
+        "cooling_degree_days": 3175.0,
+        "heating_degree_days": 2062.0,
+        "grid_carbon_intensity": 308.4798812,
+        "electricity_price": 9539844180.8
+      }
+    },
+    {
+      "rank": 5,
+      "city": "Dallas–Fort Worth",
+      "state": "Texas",
+      "state_id": "TX",
+      "latitude": "32.7357",
+      "longitude": -97.4344,
+      "scores": {
+        "total": 7.257,
+        "water_risk": 0.19845716508542993,
+        "climate_load": 0.8200000000000001,
+        "carbon": 1.0,
+        "energy_cost": 1.0
+      },
+      "inputs": {
+        "water_stress_index": -3.87,
+        "drought_risk": -3.87,
+        "water_price": 4.29,
+        "avg_annual_precipitation": 2.443333333,
+        "avg_summer_temp": 98.0,
+        "avg_annual_temp": 68.1,
+        "cooling_degree_days": 3373.0,
+        "heating_degree_days": 1482.0,
+        "grid_carbon_intensity": 338.5745422,
+        "electricity_price": 46684224688.5
+      }
+    }
+  ],
+  "scenarios": {
+    "balanced": [
+      {
+        "rank": 1,
+        "city": "Northern Virginia (NoVA)",
+        "state": "Virginia",
+        "total": 2.454
+      },
+      {
+        "rank": 2,
+        "city": "Chicago",
+        "state": "Illinois",
+        "total": 3.098
+      },
+      {
+        "rank": 3,
+        "city": "Silicon Valley",
+        "state": "California",
+        "total": 3.794
+      },
+      {
+        "rank": 4,
+        "city": "Phoenix",
+        "state": "Arizona",
+        "total": 4.189
+      },
+      {
+        "rank": 5,
+        "city": "Dallas–Fort Worth",
+        "state": "Texas",
+        "total": 7.257
+      }
+    ],
+    "carbon_priority": [
+      {
+        "rank": 1,
+        "city": "Northern Virginia (NoVA)",
+        "state": "Virginia",
+        "total": 2.368
+      },
+      {
+        "rank": 2,
+        "city": "Chicago",
+        "state": "Illinois",
+        "total": 2.881
+      },
+      {
+        "rank": 3,
+        "city": "Silicon Valley",
+        "state": "California",
+        "total": 3.031
+      },
+      {
+        "rank": 4,
+        "city": "Phoenix",
+        "state": "Arizona",
+        "total": 4.293
+      },
+      {
+        "rank": 5,
+        "city": "Dallas–Fort Worth",
+        "state": "Texas",
+        "total": 7.873
+      }
+    ],
+    "cost_priority": [
+      {
+        "rank": 1,
+        "city": "Northern Virginia (NoVA)",
+        "state": "Virginia",
+        "total": 1.882
+      },
+      {
+        "rank": 2,
+        "city": "Chicago",
+        "state": "Illinois",
+        "total": 2.84
+      },
+      {
+        "rank": 3,
+        "city": "Silicon Valley",
+        "state": "California",
+        "total": 2.894
+      },
+      {
+        "rank": 4,
+        "city": "Phoenix",
+        "state": "Arizona",
+        "total": 3.675
+      },
+      {
+        "rank": 5,
+        "city": "Dallas–Fort Worth",
+        "state": "Texas",
+        "total": 8.341
+      }
+    ],
+    "water_priority": [
+      {
+        "rank": 1,
+        "city": "Northern Virginia (NoVA)",
+        "state": "Virginia",
+        "total": 3.427
+      },
+      {
+        "rank": 2,
+        "city": "Chicago",
+        "state": "Illinois",
+        "total": 3.688
+      },
+      {
+        "rank": 3,
+        "city": "Silicon Valley",
+        "state": "California",
+        "total": 4.882
+      },
+      {
+        "rank": 4,
+        "city": "Phoenix",
+        "state": "Arizona",
+        "total": 5.413
+      },
+      {
+        "rank": 5,
+        "city": "Dallas–Fort Worth",
+        "state": "Texas",
+        "total": 5.692
+      }
+    ]
+  }
+}

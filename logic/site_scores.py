@@ -46,6 +46,19 @@ SCENARIO_WEIGHTS: Dict[str, Dict[str, float]] = {
     "water_priority": {"water": 3.0, "climate": 1.0, "carbon": 1.0, "cost": 1.0},
 }
 
+def read_csv_with_encoding(path: Path, **kwargs) -> pd.DataFrame:
+    """
+    Read a CSV that may be UTF-8 or Windows/Excel-encoded (e.g. en dash as 0x96).
+    """
+    path = Path(path)
+    for enc in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+        try:
+            return pd.read_csv(path, encoding=enc, **kwargs)
+        except UnicodeDecodeError:
+            continue
+    return pd.read_csv(path, encoding="utf-8", encoding_errors="replace", **kwargs)
+
+
 RAIN_MONTH_COLS: List[str] = [
     "Rain_Jan",
     "Rain_Feb",
@@ -110,7 +123,7 @@ def load_grid_carbon_enrichment(
     if not grid_path.is_file():
         return pd.DataFrame(), pd.DataFrame()
 
-    raw = pd.read_csv(grid_path, header=None, dtype=str)
+    raw = read_csv_with_encoding(grid_path, header=None, dtype=str)
     # City block: first row whose column 1 is exactly "City"
     header_idx: Optional[int] = None
     for i in range(min(15, len(raw))):
@@ -157,7 +170,7 @@ def load_grid_carbon_enrichment(
 
 
 def load_city_table(variables_csv: Path) -> pd.DataFrame:
-    df = pd.read_csv(variables_csv)
+    df = read_csv_with_encoding(variables_csv)
     if "Avg_Summer_Temp" not in df.columns:
         raise ValueError("Expected column Avg_Summer_Temp in variables CSV.")
     df = df[df["Avg_Summer_Temp"].notna()].copy()
